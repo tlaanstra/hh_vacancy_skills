@@ -2,9 +2,9 @@
 # coding: utf-8
 
 # TODO:
-#    - [ ] перевести формирование счетчика навыков в функцию
+#    - [x] перевести формирование счетчика навыков в функцию
 #    - [ ] добавить обьединенную сортировку по заработной плате
-#    - [ ] на основе вышеприведенных пунктовЖ добавить просмотр навыков по 0.XX самым высокооплачиваемым вакансиям
+#    - [ ] на основе вышеприведенных пунктов: добавить просмотр навыков по 0.XX самым высокооплачиваемым вакансиям
 #    - [x] try - except блок при загрузке данных с сайта
 #    - [ ] сделать приложением?
 
@@ -135,61 +135,75 @@ skill_dict = {'анализ данных':'data analysis', 'машинное о�
 for_change = skill_dict.keys()
 
 
-# In[190]:
+# In[249]:
 
 
-key_skills = Counter()
-for el in tqdm(key_skills_list):
-    if len(el) > 1:
-        skills = []
-        for ind in range(len(el)):
-            element = el[ind]['name'].lower()
-            
-            if 'sql' in element and 'nosql' not in element:
-                skills.append('sql')
-            elif 'english' in element:
-                skills.append('английский язык')
-            elif 'c++' in element or 'c' == element:
-                skills.append('c/c++')
-            elif element in javascript_list:   # should be earlie then 'java'
-                skills.append('javascript')
-            elif element.startswith('java'):
-                skills.append('java')
-            elif element.startswith('hadoop'):
-                skills.append('hadoop')
-                
-            elif element.startswith('css'):
-                skills.append('css')
-                
-            elif 'nosql' in element:
-                skills.append('nosql')
-            elif element.startswith('qa'):
-                skills.append('qa')
-            elif element.startswith('a/b'):
-                skills.append('a/b')
-            elif 'тест' in element:
-                skills.append('qa')
-            elif 'nlp' in element:
-                skills.append('nlp')
-            elif 'продаж' in element or 'холод' in element:
-                skills.append('ignored skills')
-            else:
-                skills.append(element)
-            
-            if skills[-1] in for_change:
-                skills[-1] = skill_dict[skills[-1]]
+def get_skill_counter(inp_skill_list):
+    key_skills = Counter()
+    #for el in tqdm(inp_skill_list):
+    for el in (inp_skill_list):
+        if len(el) > 1:
+            skills = []
+            for ind in range(len(el)):
+                element = el[ind]['name'].lower()
 
-        key_skills += Counter(set(skills))
+                if 'sql' in element and 'nosql' not in element:
+                    skills.append('sql')
+                elif 'english' in element:
+                    skills.append('английский язык')
+                elif 'c++' in element or 'c' == element:
+                    skills.append('c/c++')
+                elif element in javascript_list:   # should be earlie then 'java'
+                    skills.append('javascript')
+                elif element.startswith('java'):
+                    skills.append('java')
+                elif element.startswith('hadoop'):
+                    skills.append('hadoop')
+
+                elif element.startswith('css'):
+                    skills.append('css')
+
+                elif 'nosql' in element:
+                    skills.append('nosql')
+                elif element.startswith('qa'):
+                    skills.append('qa')
+                elif element.startswith('a/b'):
+                    skills.append('a/b')
+                elif 'тест' in element:
+                    skills.append('qa')
+                elif 'nlp' in element:
+                    skills.append('nlp')
+                elif 'продаж' in element or 'холод' in element:
+                    skills.append('ignored skills')
+                else:
+                    skills.append(element)
+
+                #if skills[-1] in for_change:
+                #    skills[-1] = skill_dict[skills[-1]]
+
+                if skill_dict.get(skills[-1], False) :
+                    skills[-1] = skill_dict.get(skills[-1], '')
+
+            key_skills += Counter(set(skills))
+        
+    return key_skills
 
 
 # Посмотрим на требуемые скилы в вакансиях
 
-# In[191]:
+# In[250]:
+
+
+#%%timeit -n 100
+key_skills_counter = get_skill_counter(key_skills_list)
+
+
+# In[235]:
 
 
 show_butch = 0 # какую группу по 50 скилов отображать
 
-for_print = key_skills.most_common()[show_butch*50 : show_butch*50 + 50]
+for_print = key_skills_counter.most_common()[show_butch*50 : show_butch*50 + 50]
 #for_print = key_skills.most_common()[-1*show_butch*50 - 50 : -1*show_butch*50 ]
 for el in for_print:
     print(f'{el[1]:3}  {el[0]}')
@@ -216,6 +230,13 @@ df_slr.shape
 df_slr.head()
 
 
+# In[224]:
+
+
+LOWER_BORDER = 30000
+UPPER_BORDER = 800000
+
+
 # In[194]:
 
 
@@ -237,16 +258,16 @@ plt.boxplot( df_slr[df_slr.slr_cur == 'rur'].slr_to.drop(df_slr[df_slr.slr_cur =
 
 # если предположить, что все вакансии с оплатой больше 30000 в рублях
 
-# In[222]:
+# In[227]:
 
 
-plt.boxplot( df_slr.query('slr_from <= 800000 and slr_from > 30000').slr_from.dropna())
+plt.boxplot( df_slr.query('slr_from <= @UPPER_BORDER and slr_from > @LOWER_BORDER').slr_from.dropna())
 
 
-# In[223]:
+# In[228]:
 
 
-plt.boxplot( df_slr.query('slr_to <= 800000 and slr_to > 30000').slr_to.dropna())
+plt.boxplot( df_slr.query('slr_from <= @UPPER_BORDER and slr_from > @LOWER_BORDER').slr_to.dropna())
 
 
 # In[ ]:
